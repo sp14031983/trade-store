@@ -36,7 +36,7 @@ jobs:
         distribution: 'temurin'
 
     - name: Cache Maven dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4  # Updated to v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -66,7 +66,7 @@ jobs:
           --failOnCVSS 7
 
     - name: Upload OWASP report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Updated to v4
       with:
         name: dependency-check-report
         path: reports/
@@ -93,7 +93,7 @@ jobs:
       run: mvn clean package -DskipTests
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Updated to v4
       with:
         name: trade-store-jar
         path: target/*.jar

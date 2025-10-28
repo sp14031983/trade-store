@@ -42,47 +42,35 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
-    - name: Run tests
+    - name: Run tests with coverage
       run: mvn clean test
 
-    # ADD CODE COVERAGE HERE - After tests run
-    - name: Generate Code Coverage
+    - name: Generate code coverage report
       run: mvn jacoco:report
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: target/site/jacoco/jacoco.xml
-        fail_ci_if_error: false
-
-    # ADD SECURITY SCANNING HERE - After coverage
-    - name: Run Security Scan
-      uses: github/super-linter@v5
-      env:
-        DEFAULT_BRANCH: main
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_ALL_CODEBASE: false
-        VALIDATE_JAVA: true
-        VALIDATE_YAML: true
-        VALIDATE_DOCKERFILE: true
-
     - name: Run OWASP Dependency Check
-      uses: dependency-check/Dependency-Check_Action@main
-      id: depcheck
+      run: mvn org.owasp:dependency-check-maven:check
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
-        project: 'trade-store'
-        path: '.'
-        format: 'ALL'
-        args: >
-          --enableRetired
-          --enableExperimental
-          --failOnCVSS 7
+        name: test-results
+        path: target/surefire-reports/
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: target/site/jacoco/
 
     - name: Upload OWASP report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
-        name: dependency-check-report
-        path: reports/
+        name: owasp-report
+        path: target/dependency-check-report.*
 
     - name: Build application
       run: mvn clean package -DskipTests

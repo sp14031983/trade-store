@@ -1,0 +1,54 @@
+@startuml Trade Processing Sequence
+title Trade Store - Trade Processing Flow
+
+actor Client
+participant Controller as "TradeController"
+participant Service as "TradeService" 
+participant Producer as "TradeProducer"
+participant PostgreSQL as "PostgreSQL\n(Trade Store)"
+participant MongoDB as "MongoDB\n(History Store)"
+participant Kafka as "Kafka Topic"
+
+Client -> Controller: POST /api/trades
+activate Controller
+
+Controller -> Service: saveTrade(dto)
+activate Service
+
+alt Validation Failed
+    Service -> Service: validate maturity date
+    Service -> Service: validate version
+    Service --> Controller: InvalidTradeException
+    Controller --> Client: 400 Bad Request
+else Validation Passed
+    Service -> PostgreSQL: findById(tradeId)
+    PostgreSQL --> Service: existing trade (if any)
+    
+    Service -> Service: process business logic
+    Service -> PostgreSQL: save(trade)
+    PostgreSQL --> Service: saved trade
+    
+    Service -> MongoDB: save(tradeHistory)
+    MongoDB --> Service: saved history
+    
+    Service --> Controller: saved trade
+end
+
+deactivate Service
+
+Controller -> Producer: publishTrade(dto)
+activate Producer
+Producer -> Kafka: send(trade json)
+Kafka --> Producer: ack
+deactivate Producer
+
+Controller --> Client: 201 Created + Trade
+deactivate Controller
+
+note right of Kafka
+  Trade published to 
+  'trades' topic for 
+  downstream processing
+end note
+
+@enduml

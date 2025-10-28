@@ -1,0 +1,113 @@
+@startuml Trade Store Class Diagram
+title Trade Store - System Architecture
+
+package "Controller Layer" {
+    class TradeController {
+        -tradeService: TradeService
+        -tradeProducer: TradeProducer
+        +saveTrade(dto): ResponseEntity<Trade>
+        +getAllTrades(): ResponseEntity<List<Trade>>
+        +publishTrade(dto): ResponseEntity<String>
+    }
+    
+    class GlobalExceptionHandler {
+        +handleInvalidTrade(ex): ResponseEntity<Map>
+        +handleGeneric(ex): ResponseEntity<Map>
+    }
+}
+
+package "Service Layer" {
+    class TradeService {
+        -tradeRepository: TradeRepository
+        -tradeHistoryRepository: TradeHistoryRepository
+        +saveTrade(dto): Trade
+        +getAllTrades(): List<Trade>
+        +markExpiredTrades(): void
+    }
+    
+    class TradeProducer {
+        -kafkaTemplate: KafkaTemplate
+        -objectMapper: ObjectMapper
+        +publishTrade(dto): void
+    }
+    
+    class TradeScheduler {
+        -tradeService: TradeService
+        +checkExpiredTrades(): void
+    }
+}
+
+package "Repository Layer" {
+    interface TradeRepository extends JpaRepository {
+        +findByBookIdAndCounterPartyId(): Optional<Trade>
+        +findByExpiredFalseAndMaturityDateBefore(): List<Trade>
+    }
+    
+    interface TradeHistoryRepository extends MongoRepository {
+    }
+}
+
+package "Model Layer" {
+    class Trade {
+        -tradeId: UUID
+        -version: int
+        -counterPartyId: String
+        -bookId: String
+        -maturityDate: LocalDate
+        -createdDate: LocalDate
+        -expired: boolean
+    }
+    
+    class TradeHistory {
+        -id: UUID
+        -tradeId: UUID
+        -version: int
+        -counterPartyId: String
+        -bookId: String
+        -maturityDate: LocalDate
+        -createdDate: LocalDate
+        -expired: boolean
+        -recordedDate: LocalDate
+    }
+    
+    class TradeDto {
+        -tradeId: UUID
+        -version: int
+        -counterPartyId: String
+        -bookId: String
+        -maturityDate: LocalDate
+    }
+}
+
+package "Exception Layer" {
+    class InvalidTradeException extends RuntimeException {
+        +InvalidTradeException(message)
+    }
+}
+
+package "Configuration" {
+    class KafkaConfig {
+        +tradeTopic(): NewTopic
+    }
+    
+    class KafkaProducerConfig {
+        +producerFactory(): ProducerFactory
+        +kafkaTemplate(): KafkaTemplate
+    }
+}
+
+' Relationships
+TradeController --> TradeService
+TradeController --> TradeProducer
+TradeController --> TradeDto
+TradeService --> TradeRepository  
+TradeService --> TradeHistoryRepository
+TradeService --> Trade
+TradeService --> TradeHistory
+TradeService --> TradeDto
+TradeProducer --> TradeDto
+TradeRepository --> Trade
+TradeHistoryRepository --> TradeHistory
+GlobalExceptionHandler --> InvalidTradeException
+
+@enduml

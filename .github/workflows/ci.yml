@@ -36,22 +36,35 @@ jobs:
         distribution: 'temurin'
 
     - name: Cache Maven dependencies
-      uses: actions/cache@v4  # Updated to v4
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
     - name: Run tests
-      run: mvn clean test -Dspring.profiles.active=test
+      run: mvn clean test
 
-    - name: Generate test report
-      uses: dorny/test-reporter@v1
-      if: success() || failure()
+    # ADD CODE COVERAGE HERE - After tests run
+    - name: Generate Code Coverage
+      run: mvn jacoco:report
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
       with:
-        name: Maven Tests
-        path: target/surefire-reports/*.xml
-        reporter: java-junit
+        file: target/site/jacoco/jacoco.xml
+        fail_ci_if_error: false
+
+    # ADD SECURITY SCANNING HERE - After coverage
+    - name: Run Security Scan
+      uses: github/super-linter@v5
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_ALL_CODEBASE: false
+        VALIDATE_JAVA: true
+        VALIDATE_YAML: true
+        VALIDATE_DOCKERFILE: true
 
     - name: Run OWASP Dependency Check
       uses: dependency-check/Dependency-Check_Action@main
@@ -66,7 +79,7 @@ jobs:
           --failOnCVSS 7
 
     - name: Upload OWASP report
-      uses: actions/upload-artifact@v4  # Updated to v4
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-check-report
         path: reports/
@@ -93,7 +106,7 @@ jobs:
       run: mvn clean package -DskipTests
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4  # Updated to v4
+      uses: actions/upload-artifact@v4
       with:
         name: trade-store-jar
         path: target/*.jar

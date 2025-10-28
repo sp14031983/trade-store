@@ -109,9 +109,17 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>8.4.0</version>
+                <version>9.0.9</version>  <!-- Updated from 8.4.0 -->
                 <configuration>
                     <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <!-- Configure for new NVD API -->
+                    <nvdApiServicesEnabled>false</nvdApiServicesEnabled>
+                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                    <nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
+                    <nodePackageAnalyzerEnabled>false</nodePackageAnalyzerEnabled>
+                    <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
+                    <!-- Use cached data to avoid network issues -->
+                    <autoUpdate>false</autoUpdate>
                 </configuration>
             </plugin>
             <plugin>

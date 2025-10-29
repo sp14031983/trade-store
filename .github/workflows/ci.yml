@@ -10,6 +10,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    
     services:
       postgres:
         image: postgres:15
@@ -49,7 +52,7 @@ jobs:
       run: mvn jacoco:report
 
     - name: Run OWASP Dependency Check
-      run: mvn org.owasp:dependency-check-maven:check -Ddependency-check.autoUpdate=true -Dnvd.api.key=${{ secrets.NVD_API_KEY }} 
+      run: mvn org.owasp:dependency-check-maven:check -Ddependency-check.autoUpdate=true
 
     - name: Upload test results
       uses: actions/upload-artifact@v4

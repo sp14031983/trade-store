@@ -58,7 +58,7 @@ jobs:
         key: dependency-check-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
 
     - name: OWASP Dependency Check
-      run: mvn -B org.owasp:dependency-check-maven:check -Dnvd.api.key=${{ secrets.NVD_API_KEY }} -Danalyzer.nvd.api.delay=5000 -Dnvd.api.timeout=30000 -Ddependency-check.autoUpdate=true
+      run: mvn -B org.owasp:dependency-check-maven:check -Ddependency-check.data.update=false -Dnvd.api.key=${{ secrets.NVD_API_KEY }}
 
     - name: Upload test results
       uses: actions/upload-artifact@v4

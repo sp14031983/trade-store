@@ -54,14 +54,11 @@ jobs:
     - name: Cache Dependency-Check DB
       uses: actions/cache@v4
       with:
-        path: ~/.m2/repository/org/owasp/dependency-check-data
-        key: dependency-check-${{ runner.os }}
+        path: ~/.m2/repository/org/owasp
+        key: dependency-check-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
 
     - name: OWASP Dependency Check
-      run: mvn org.owasp:dependency-check-maven:check \
-           -Dnvd.api.key=${{ secrets.NVD_API_KEY }} \
-           -Danalyzer.nvd.api.delay=5000 \
-           -Ddependency-check.autoUpdate=true
+      run: mvn -B org.owasp:dependency-check-maven:check -Dnvd.api.key=${{ secrets.NVD_API_KEY }} -Danalyzer.nvd.api.delay=5000 -Dnvd.api.timeout=30000 -Ddependency-check.autoUpdate=true
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -82,7 +79,7 @@ jobs:
       if: always()
       with:
         name: owasp-report
-        path: target/dependency-check-report.*
+        path: target/dependency-check-report.html
 
     - name: Build application
       run: mvn clean package -DskipTests

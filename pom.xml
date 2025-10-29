@@ -109,19 +109,23 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>9.0.9</version>  <!-- Updated from 8.4.0 -->
+                <version>9.0.9</version>
                 <configuration>
                     <failBuildOnCVSS>7</failBuildOnCVSS>
-                    <!-- Configure for new NVD API -->
-                    <nvdApiServicesEnabled>false</nvdApiServicesEnabled>
-                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-                    <nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
-                    <nodePackageAnalyzerEnabled>false</nodePackageAnalyzerEnabled>
-                    <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-                    <!-- Use cached data to avoid network issues -->
-                    <autoUpdate>false</autoUpdate>
+                    <skipTestScope>true</skipTestScope>
+                    <!-- other valid configs -->
+                    <autoUpdate>true</autoUpdate>
+                    <!-- etc -->
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>

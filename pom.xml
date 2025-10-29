@@ -109,12 +109,14 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>9.0.9</version>
+                <version>9.2.0</version>
                 <configuration>
                     <failBuildOnCVSS>7</failBuildOnCVSS>
                     <skipTestScope>true</skipTestScope>
                     <!-- other valid configs -->
                     <autoUpdate>true</autoUpdate>
+                    <nvdApiDelay>6000</nvdApiDelay>
+                    <nvdMaxRetryCount>5</nvdMaxRetryCount>
                     <!-- etc -->
                 </configuration>
                 <executions>

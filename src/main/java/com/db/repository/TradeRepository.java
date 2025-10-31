@@ -11,6 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface TradeRepository extends JpaRepository<Trade, UUID> {
-    Optional<Trade> findByBookIdAndCounterPartyId(String bookId, String counterPartyId);
+    List<Trade> findByBookIdAndCounterPartyId(String bookId, String counterPartyId);
     List<Trade> findByExpiredFalseAndMaturityDateBefore(LocalDate date);
 }

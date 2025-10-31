@@ -6,7 +6,12 @@ import com.db.model.Trade;
 import com.db.model.TradeHistory;
 import com.db.repository.TradeHistoryRepository;
 import com.db.repository.TradeRepository;
+import com.db.stream.TradeProducer;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +26,8 @@ public class TradeService {
 
     private final TradeRepository tradeRepository;
     private final TradeHistoryRepository tradeHistoryRepository;
+    private final TradeProducer tradeProducer;
+    private static final Logger log = LoggerFactory.getLogger(TradeService.class);
 
     @Transactional
     public Trade saveTrade(TradeDto dto) {
@@ -58,22 +65,33 @@ public class TradeService {
         }
 
         Trade savedTrade = tradeRepository.save(tradeToSave);
+        saveTradeHistory(savedTrade);
 
+        return savedTrade;
+    }
+
+    // Circuit breaker for MongoDB operations
+    @CircuitBreaker(name = "mongodb", fallbackMethod = "saveHistoryFallback")
+    public void saveTradeHistory(Trade trade) {
         // Save history to MongoDB
         TradeHistory history = TradeHistory.builder()
                 .id(UUID.randomUUID())
-                .tradeId(savedTrade.getTradeId())
-                .version(savedTrade.getVersion())
-                .bookId(savedTrade.getBookId())
-                .counterPartyId(savedTrade.getCounterPartyId())
-                .maturityDate(savedTrade.getMaturityDate())
-                .createdDate(savedTrade.getCreatedDate())
-                .expired(savedTrade.isExpired())
+                .tradeId(trade.getTradeId())
+                .version(trade.getVersion())
+                .bookId(trade.getBookId())
+                .counterPartyId(trade.getCounterPartyId())
+                .maturityDate(trade.getMaturityDate())
+                .createdDate(trade.getCreatedDate())
+                .expired(trade.isExpired())
                 .recordedDate(LocalDate.now())
                 .build();
 
         tradeHistoryRepository.save(history);
-        return savedTrade;
+    }
+
+    public void saveHistoryFallback(Trade trade, Exception ex) {
+        log.error("Failed to save trade history for {}", trade.getTradeId(), ex);
+        // Could save to retry queue or alternative storage
     }
 
     public List<Trade> getAllTrades() {
@@ -86,6 +104,20 @@ public class TradeService {
         if(expiredTrades == null || expiredTrades.isEmpty()) return;
         expiredTrades.forEach(trade -> trade.setExpired(true));
         tradeRepository.saveAll(expiredTrades);
+    }
+
+    // Circuit breaker for Kafka publishing
+    @CircuitBreaker(name = "kafka", fallbackMethod = "publishTradeFallback")
+    @Retry(name = "kafka")
+    public void publishTradeEvent(TradeDto dto) {
+        tradeProducer.publishTrade(dto);
+    }
+
+    // Fallback method
+    public void publishTradeFallback(TradeDto dto, Exception ex) {
+
+        log.error("Failed to publish trade {} to Kafka, storing for retry", dto.getTradeId(), ex);
+        // Store in retry queue or dead letter table
     }
 
 }

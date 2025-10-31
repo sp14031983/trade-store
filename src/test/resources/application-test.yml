@@ -15,7 +15,19 @@ spring:
       uri: mongodb://localhost:27017/test_trade_history
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${spring.kafka.bootstrap-servers} # Global setting
+
+    producer: # Add this block
+      bootstrap-servers: ${spring.kafka.bootstrap-servers} # Explicit producer bootstrap servers
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    consumer: # You can add this block too if needed for clarity/completeness
+      group-id: trade-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 
 logging:
   level:

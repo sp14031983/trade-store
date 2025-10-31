@@ -20,13 +20,17 @@ public class TradeProducer {
     @Value("${app.kafka.topic:trades}")
     private String tradeTopic;
 
-    public void publishTrade(TradeDto dto) {
+    public void publishTrade(TradeDto dto, String topicName) {
         try {
             String json = objectMapper.writeValueAsString(dto);
-            kafkaTemplate.send(tradeTopic, json);
-            log.info("📤 Published trade: {}", dto.getTradeId());
+            kafkaTemplate.send(topicName, json);
+            log.info("Published trade: {} for topic {}", dto.getTradeId(),tradeTopic);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize trade for Kafka", e);
         }
+    }
+
+    public void publishTrade(TradeDto dto) {
+        publishTrade(dto, tradeTopic);
     }
 }

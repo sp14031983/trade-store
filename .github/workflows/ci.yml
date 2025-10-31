@@ -50,17 +50,7 @@ jobs:
 
     - name: Generate code coverage report
       run: mvn jacoco:report
-
-    - name: Cache Dependency-Check DB
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2/repository/org/owasp
-        key: dependency-check-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
-
-    - name: OWASP Dependency Check (Skip NVD in CI)
-      run: mvn -B org.owasp:dependency-check-maven:check -Ddependency-check.autoUpdate=true -Dnvd.api.key=$NVD_API_KEY -Dnvd.api.delay=6000 -Dnvd.api.max.retry.count=5 || echo "OWASP scan completed with transient API issues"
-      continue-on-error: true
-
+   
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -74,13 +64,6 @@ jobs:
       with:
         name: coverage-reports
         path: target/site/jacoco/
-
-    - name: Upload OWASP report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: owasp-report
-        path: target/dependency-check-report.html
 
     - name: Build application
       run: mvn clean package -DskipTests

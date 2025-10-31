@@ -1,6 +1,8 @@
 package com.db.dto;
 
 import lombok.*;
+import org.antlr.v4.runtime.misc.NotNull;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -10,6 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class TradeDto {
+
     private UUID tradeId;
     private int version;
     private String counterPartyId;

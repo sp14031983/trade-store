@@ -30,3 +30,27 @@ spring:
 app:
   kafka:
     topic: trades
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      kafka:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+      mongodb:
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 60
+  retry:
+    instances:
+      kafka:
+        maxAttempts: 3
+        waitDuration: 1s
+  timelimiter:
+    instances:
+      kafka:
+        timeoutDuration: 5s
